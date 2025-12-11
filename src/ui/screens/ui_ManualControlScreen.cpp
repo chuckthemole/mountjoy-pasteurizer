@@ -10,18 +10,20 @@
 lv_obj_t *ui_ManualControlScreen = nullptr;
 lv_obj_t *ui_ManualControlTitle = nullptr;
 
+lv_obj_t *ui_DisableSOLOButton = nullptr;
+lv_obj_t *ui_CoolCycleSOLOButton = nullptr;
 lv_obj_t *ui_OperationButton = nullptr;
-lv_obj_t *ui_HeatButton = nullptr;
-lv_obj_t *ui_ChillButton = nullptr;
+lv_obj_t *ui_WallHeaterButton = nullptr;
 lv_obj_t *ui_PumpButton = nullptr;
 
 lv_obj_t *ui_CoreTempLabel = nullptr;
 lv_obj_t *ui_ChamberTempLabel = nullptr;
 
 // Button states
+bool stateDisableSOLO = false;
+bool stateCoolCycleSOLO = false;
 bool stateOperation = false;
-bool stateHeat = false;
-bool stateChill = false;
+bool stateWallHeater = false;
 bool statePump = false;
 
 static void logState(const char *name, bool state)
@@ -36,84 +38,88 @@ static void update_button_color(lv_obj_t *btn, bool state)
     lv_obj_set_style_bg_color(btn, color, LV_PART_MAIN);
 }
 
-// Event handlers for buttons
-static void ui_event_OperationButton(lv_event_t *e)
+/* ============================================================
+   BUTTON EVENT HANDLERS (5 relays)
+   ============================================================ */
+
+static void ui_event_DisableSOLO(lv_event_t *e)
+{
+    if (lv_event_get_code(e) == LV_EVENT_CLICKED)
+    {
+        stateDisableSOLO = !stateDisableSOLO;
+        update_button_color(ui_DisableSOLOButton, stateDisableSOLO);
+        logState("Disable SOLO", stateDisableSOLO);
+
+        if (stateDisableSOLO)
+            ui_event_DisableSOLOEnabled(e);
+        else
+            ui_event_DisableSOLODisabled(e);
+    }
+}
+
+static void ui_event_CoolCycleSOLO(lv_event_t *e)
+{
+    if (lv_event_get_code(e) == LV_EVENT_CLICKED)
+    {
+        stateCoolCycleSOLO = !stateCoolCycleSOLO;
+        update_button_color(ui_CoolCycleSOLOButton, stateCoolCycleSOLO);
+        logState("Cool Cycle SOLO", stateCoolCycleSOLO);
+
+        if (stateCoolCycleSOLO)
+            ui_event_CoolCycleSOLOEnabled(e);
+        else
+            ui_event_CoolCycleSOLODisabled(e);
+    }
+}
+
+static void ui_event_Operation(lv_event_t *e)
 {
     if (lv_event_get_code(e) == LV_EVENT_CLICKED)
     {
         stateOperation = !stateOperation;
         update_button_color(ui_OperationButton, stateOperation);
         logState("Operation", stateOperation);
-        // trigger relay control
+
         if (stateOperation)
-        {
             ui_event_OperationButtonEnabled(e);
-        }
         else
-        {
             ui_event_OperationButtonDisabled(e);
-        }
     }
 }
 
-static void ui_event_HeatButton(lv_event_t *e)
+static void ui_event_WallHeater(lv_event_t *e)
 {
     if (lv_event_get_code(e) == LV_EVENT_CLICKED)
     {
-        stateHeat = !stateHeat;
-        update_button_color(ui_HeatButton, stateHeat);
-        logState("Heat", stateHeat);
-        // trigger relay control
-        if (stateHeat)
-        {
-            ui_event_HeatButtonEnabled(e);
-        }
+        stateWallHeater = !stateWallHeater;
+        update_button_color(ui_WallHeaterButton, stateWallHeater);
+        logState("Wall Heater", stateWallHeater);
+
+        if (stateWallHeater)
+            ui_event_WallHeaterEnabled(e);
         else
-        {
-            ui_event_HeatButtonDisabled(e);
-        }
+            ui_event_WallHeaterDisabled(e);
     }
 }
 
-static void ui_event_ChillButton(lv_event_t *e)
-{
-    if (lv_event_get_code(e) == LV_EVENT_CLICKED)
-    {
-        stateChill = !stateChill;
-        update_button_color(ui_ChillButton, stateChill);
-        logState("Chill", stateChill);
-        // trigger relay control
-        if (stateChill)
-        {
-            ui_event_ChillButtonEnabled(e);
-        }
-        else
-        {
-            ui_event_ChillButtonDisabled(e);
-        }
-    }
-}
-
-static void ui_event_PumpButton(lv_event_t *e)
+static void ui_event_Pump(lv_event_t *e)
 {
     if (lv_event_get_code(e) == LV_EVENT_CLICKED)
     {
         statePump = !statePump;
         update_button_color(ui_PumpButton, statePump);
         logState("Pump", statePump);
-        // trigger relay control
+
         if (statePump)
-        {
             ui_event_PumpButtonEnabled(e);
-        }
         else
-        {
             ui_event_PumpButtonDisabled(e);
-        }
     }
 }
 
-// Screen init
+/* ============================================================
+   SCREEN INIT
+   ============================================================ */
 void ui_ManualControl_screen_init()
 {
     ui_ManualControlScreen = lv_obj_create(nullptr);
@@ -130,46 +136,36 @@ void ui_ManualControl_screen_init()
     lv_obj_set_style_text_font(ui_ManualControlTitle, &lv_font_montserrat_36, LV_PART_MAIN);
     lv_obj_align(ui_ManualControlTitle, LV_ALIGN_TOP_MID, 0, 10);
 
-    // Temperature displays container
+    // Temperature container
     lv_obj_t *tempContainer = lv_obj_create(ui_ManualControlScreen);
-    lv_obj_set_size(tempContainer, 700, 140); // Increased height for multi-line text
+    lv_obj_set_size(tempContainer, 700, 140);
     lv_obj_align(tempContainer, LV_ALIGN_TOP_MID, 0, 70);
     lv_obj_set_style_bg_color(tempContainer, lv_color_hex(0x2E2E2E), LV_PART_MAIN);
     lv_obj_set_style_radius(tempContainer, 10, LV_PART_MAIN);
     lv_obj_set_style_pad_all(tempContainer, 20, LV_PART_MAIN);
     lv_obj_set_flex_flow(tempContainer, LV_FLEX_FLOW_ROW);
-    lv_obj_set_flex_align(tempContainer, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER); // Space between items
-    lv_obj_set_style_border_width(tempContainer, 2, LV_PART_MAIN);
-    lv_obj_set_style_border_color(tempContainer, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
+    lv_obj_set_flex_align(tempContainer, LV_FLEX_ALIGN_SPACE_BETWEEN,
+                          LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
     ui_CoreTempLabel = lv_label_create(tempContainer);
     lv_label_set_text(ui_CoreTempLabel, "Core Temp:\n-- C\n-- F");
     lv_obj_set_style_text_font(ui_CoreTempLabel, &lv_font_montserrat_24, LV_PART_MAIN);
     lv_obj_set_style_text_color(ui_CoreTempLabel, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
-    lv_obj_set_style_text_align(ui_CoreTempLabel, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
 
     ui_ChamberTempLabel = lv_label_create(tempContainer);
     lv_label_set_text(ui_ChamberTempLabel, "Chamber Temp:\n-- C\n-- F");
     lv_obj_set_style_text_font(ui_ChamberTempLabel, &lv_font_montserrat_24, LV_PART_MAIN);
     lv_obj_set_style_text_color(ui_ChamberTempLabel, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
-    lv_obj_set_style_text_align(ui_ChamberTempLabel, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN);
 
-    // Buttons container
-    lv_obj_t *btnContainer = lv_obj_create(ui_ManualControlScreen);
-    lv_obj_set_size(btnContainer, 700, 200);
-    lv_obj_align(btnContainer, LV_ALIGN_BOTTOM_MID, 0, -50);
-    lv_obj_set_style_bg_color(btnContainer, lv_color_hex(0x2E2E2E), LV_PART_MAIN);
-    lv_obj_set_style_radius(btnContainer, 10, LV_PART_MAIN);
-    lv_obj_set_style_pad_all(btnContainer, 20, LV_PART_MAIN);
-    lv_obj_set_flex_flow(btnContainer, LV_FLEX_FLOW_ROW_WRAP);
-    lv_obj_set_style_border_width(btnContainer, 2, LV_PART_MAIN);
-    lv_obj_set_style_border_color(btnContainer, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
-
-    // Create Buttons
+    // ---------- BUTTON CREATOR ----------
     auto create_button = [](lv_obj_t *parent, const char *text, lv_event_cb_t cb) -> lv_obj_t *
     {
         lv_obj_t *btn = lv_button_create(parent);
-        lv_obj_set_size(btn, 150, 80);
+
+        // Smaller height so everything fits
+        lv_obj_set_width(btn, LV_PCT(48)); // two per row
+        lv_obj_set_height(btn, 60);        // reduced from 80
+
         lv_obj_set_style_radius(btn, 8, LV_PART_MAIN);
         update_button_color(btn, false);
 
@@ -182,10 +178,44 @@ void ui_ManualControl_screen_init()
         return btn;
     };
 
-    ui_OperationButton = create_button(btnContainer, "Operation", ui_event_OperationButton);
-    ui_HeatButton = create_button(btnContainer, "Heat", ui_event_HeatButton);
-    ui_ChillButton = create_button(btnContainer, "Chill", ui_event_ChillButton);
-    ui_PumpButton = create_button(btnContainer, "Pump", ui_event_PumpButton);
+    // ---------- BUTTON CONTAINER ----------
+    lv_obj_t *btnContainer = lv_obj_create(ui_ManualControlScreen);
+    lv_obj_set_size(btnContainer, 700, LV_SIZE_CONTENT); // height adjusts to content
+    lv_obj_align_to(btnContainer, tempContainer, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
+
+    lv_obj_set_style_bg_color(btnContainer, lv_color_hex(0x2E2E2E), LV_PART_MAIN);
+    lv_obj_set_style_radius(btnContainer, 10, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(btnContainer, 10, LV_PART_MAIN);    // reduce padding
+    lv_obj_set_style_pad_row(btnContainer, 10, LV_PART_MAIN);    // reduce row spacing
+    lv_obj_set_style_pad_column(btnContainer, 10, LV_PART_MAIN); // spacing between columns
+
+    lv_obj_set_flex_flow(btnContainer, LV_FLEX_FLOW_ROW_WRAP);
+    lv_obj_set_flex_align(
+        btnContainer,
+        LV_FLEX_ALIGN_SPACE_EVENLY,
+        LV_FLEX_ALIGN_START,
+        LV_FLEX_ALIGN_START);
+
+    // ---------- CREATE BUTTONS ----------
+    // First two rows, 2 per row
+    ui_DisableSOLOButton = create_button(btnContainer, "Disable SOLO", ui_event_DisableSOLO);
+    ui_CoolCycleSOLOButton = create_button(btnContainer, "Cool SOLO", ui_event_CoolCycleSOLO);
+    ui_OperationButton = create_button(btnContainer, "Operation", ui_event_Operation);
+    ui_WallHeaterButton = create_button(btnContainer, "Wall Heater", ui_event_WallHeater);
+
+    // Last button, full width
+    ui_PumpButton = lv_button_create(btnContainer);
+    lv_obj_set_width(ui_PumpButton, LV_PCT(100)); // full width
+    lv_obj_set_height(ui_PumpButton, 60);         // same as other buttons
+    lv_obj_set_style_radius(ui_PumpButton, 8, LV_PART_MAIN);
+    update_button_color(ui_PumpButton, false);
+
+    lv_obj_t *lblPump = lv_label_create(ui_PumpButton);
+    lv_label_set_text(lblPump, "Pump");
+    lv_obj_set_style_text_font(lblPump, &lv_font_montserrat_24, LV_PART_MAIN);
+    lv_obj_center(lblPump);
+
+    lv_obj_add_event_cb(ui_PumpButton, ui_event_Pump, LV_EVENT_ALL, nullptr);
 
     // Load screen
     lv_scr_load(ui_ManualControlScreen);
@@ -194,15 +224,20 @@ void ui_ManualControl_screen_init()
     ui_GlobalLabels::updateUserSelectionLabel(ui_ManualControlScreen);
 }
 
+/* ============================================================
+   Destroy & Update (unchanged)
+   ============================================================ */
+
 void ui_ManualControl_screen_destroy()
 {
     if (ui_ManualControlScreen)
         lv_obj_clean(ui_ManualControlScreen);
 
     ui_ManualControlTitle = nullptr;
+    ui_DisableSOLOButton = nullptr;
+    ui_CoolCycleSOLOButton = nullptr;
     ui_OperationButton = nullptr;
-    ui_HeatButton = nullptr;
-    ui_ChillButton = nullptr;
+    ui_WallHeaterButton = nullptr;
     ui_PumpButton = nullptr;
     ui_CoreTempLabel = nullptr;
     ui_ChamberTempLabel = nullptr;

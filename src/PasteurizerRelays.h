@@ -4,33 +4,41 @@
 class PasteurizerRelays
 {
 public:
-    // Constructor: pass the 4 relay pins
-    PasteurizerRelays(int opPin, int heatPin, int chillPin, int pumpPin);
+    PasteurizerRelays(
+        int disableSOLO,
+        int coolCycleSOLO,
+        int operation,
+        int wallHeater,
+        int pump);
 
-    // Initialize pins (call in setup)
     void begin();
+
+    // Disable SOLO relay
+    void activateDisableSOLO();
+    void deactivateDisableSOLO();
+
+    // Cool Cycle SOLO relay
+    void activateCoolCycleSOLO();
+    void deactivateCoolCycleSOLO();
 
     // Operation relay
     void activateOperationRelay();
     void deactivateOperationRelay();
 
-    // Heat relay
-    void activateHeatRelay();
-    void deactivateHeatRelay();
-
-    // Chill relay
-    void activateChillRelay();
-    void deactivateChillRelay();
+    // Wall Heater relay
+    void activateWallHeaterRelay();
+    void deactivateWallHeaterRelay();
 
     // Pump relay
     void activatePumpRelay();
     void deactivatePumpRelay();
 
 private:
-    int _operationPin;
-    int _heatPin;
-    int _chillPin;
-    int _pumpPin;
+    int _disableSOLO;
+    int _coolCycleSOLO;
+    int _operation;
+    int _wallHeater;
+    int _pump;
 
     // Internal helper
     void setRelay(int pin, bool state);

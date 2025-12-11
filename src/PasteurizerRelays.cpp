@@ -1,49 +1,57 @@
 #include "PasteurizerRelays.h"
 
-// ---------------- Constructor ----------------
 PasteurizerRelays::PasteurizerRelays(
-    int opPin,
-    int heatPin,
-    int chillPin,
-    int pumpPin)
-    : _operationPin(opPin), _heatPin(heatPin), _chillPin(chillPin), _pumpPin(pumpPin)
+    int disableSOLO,
+    int coolCycleSOLO,
+    int operation,
+    int wallHeater,
+    int pump)
+    : _disableSOLO(disableSOLO),
+      _coolCycleSOLO(coolCycleSOLO),
+      _operation(operation),
+      _wallHeater(wallHeater),
+      _pump(pump)
 {
 }
 
-// ---------------- Initialize pins ----------------
 void PasteurizerRelays::begin()
 {
-    pinMode(_operationPin, OUTPUT);
-    pinMode(_heatPin, OUTPUT);
-    pinMode(_chillPin, OUTPUT);
-    pinMode(_pumpPin, OUTPUT);
+    pinMode(_disableSOLO, OUTPUT);
+    pinMode(_coolCycleSOLO, OUTPUT);
+    pinMode(_operation, OUTPUT);
+    pinMode(_wallHeater, OUTPUT);
+    pinMode(_pump, OUTPUT);
 
     // Set all relays to OFF at startup
+    deactivateDisableSOLO();
+    deactivateCoolCycleSOLO();
     deactivateOperationRelay();
-    deactivateHeatRelay();
-    deactivateChillRelay();
+    deactivateWallHeaterRelay();
     deactivatePumpRelay();
 }
 
-// ---------------- Relay helpers ----------------
 void PasteurizerRelays::setRelay(int pin, bool state)
 {
-    // HIGH = ON for most relay shields; change if your shield is active LOW
+    // HIGH = ON for most relay shields; adjust if your board is active LOW
     digitalWrite(pin, state ? HIGH : LOW);
 }
 
+// ---------------- Disable SOLO ----------------
+void PasteurizerRelays::activateDisableSOLO() { setRelay(_disableSOLO, true); }
+void PasteurizerRelays::deactivateDisableSOLO() { setRelay(_disableSOLO, false); }
+
+// ---------------- Cool Cycle SOLO ----------------
+void PasteurizerRelays::activateCoolCycleSOLO() { setRelay(_coolCycleSOLO, true); }
+void PasteurizerRelays::deactivateCoolCycleSOLO() { setRelay(_coolCycleSOLO, false); }
+
 // ---------------- Operation ----------------
-void PasteurizerRelays::activateOperationRelay() { setRelay(_operationPin, true); }
-void PasteurizerRelays::deactivateOperationRelay() { setRelay(_operationPin, false); }
+void PasteurizerRelays::activateOperationRelay() { setRelay(_operation, true); }
+void PasteurizerRelays::deactivateOperationRelay() { setRelay(_operation, false); }
 
-// ---------------- Heat ----------------
-void PasteurizerRelays::activateHeatRelay() { setRelay(_heatPin, true); }
-void PasteurizerRelays::deactivateHeatRelay() { setRelay(_heatPin, false); }
-
-// ---------------- Chill ----------------
-void PasteurizerRelays::activateChillRelay() { setRelay(_chillPin, true); }
-void PasteurizerRelays::deactivateChillRelay() { setRelay(_chillPin, false); }
+// ---------------- Wall Heater ----------------
+void PasteurizerRelays::activateWallHeaterRelay() { setRelay(_wallHeater, true); }
+void PasteurizerRelays::deactivateWallHeaterRelay() { setRelay(_wallHeater, false); }
 
 // ---------------- Pump ----------------
-void PasteurizerRelays::activatePumpRelay() { setRelay(_pumpPin, true); }
-void PasteurizerRelays::deactivatePumpRelay() { setRelay(_pumpPin, false); }
+void PasteurizerRelays::activatePumpRelay() { setRelay(_pump, true); }
+void PasteurizerRelays::deactivatePumpRelay() { setRelay(_pump, false); }

@@ -8,10 +8,43 @@
 // Helper function to log button state change
 static void logButtonState(const char *name, bool state)
 {
-    logger.info("[PasteurizerManualControlEvents] " + String(name) + " button " + (state ? "enabled" : "disabled"));
+    logger.info("[PasteurizerManualControlEvents] " + String(name) +
+                " button " + (state ? "enabled" : "disabled"));
 }
 
-// Operation Button Events
+/* ============================================================
+   Disable SOLO Button Events
+   ============================================================ */
+void ui_event_DisableSOLOEnabled(lv_event_t *e)
+{
+    logButtonState("Disable SOLO", true);
+    pasteurizerRelays.activateDisableSOLO();
+}
+
+void ui_event_DisableSOLODisabled(lv_event_t *e)
+{
+    logButtonState("Disable SOLO", false);
+    pasteurizerRelays.deactivateDisableSOLO();
+}
+
+/* ============================================================
+   Cool Cycle SOLO Button Events
+   ============================================================ */
+void ui_event_CoolCycleSOLOEnabled(lv_event_t *e)
+{
+    logButtonState("Cool Cycle SOLO", true);
+    pasteurizerRelays.activateCoolCycleSOLO();
+}
+
+void ui_event_CoolCycleSOLODisabled(lv_event_t *e)
+{
+    logButtonState("Cool Cycle SOLO", false);
+    pasteurizerRelays.deactivateCoolCycleSOLO();
+}
+
+/* ============================================================
+   Operation Button Events
+   ============================================================ */
 void ui_event_OperationButtonEnabled(lv_event_t *e)
 {
     logButtonState("Operation", true);
@@ -24,33 +57,24 @@ void ui_event_OperationButtonDisabled(lv_event_t *e)
     pasteurizerRelays.deactivateOperationRelay();
 }
 
-// Heat Button Events
-void ui_event_HeatButtonEnabled(lv_event_t *e)
+/* ============================================================
+   Wall Heater Button Events
+   ============================================================ */
+void ui_event_WallHeaterEnabled(lv_event_t *e)
 {
-    logButtonState("Heat", true);
-    pasteurizerRelays.activateHeatRelay();
+    logButtonState("Wall Heater", true);
+    pasteurizerRelays.activateWallHeaterRelay();
 }
 
-void ui_event_HeatButtonDisabled(lv_event_t *e)
+void ui_event_WallHeaterDisabled(lv_event_t *e)
 {
-    logButtonState("Heat", false);
-    pasteurizerRelays.deactivateHeatRelay();
+    logButtonState("Wall Heater", false);
+    pasteurizerRelays.deactivateWallHeaterRelay();
 }
 
-// Chill Button Events
-void ui_event_ChillButtonEnabled(lv_event_t *e)
-{
-    logButtonState("Chill", true);
-    pasteurizerRelays.activateChillRelay();
-}
-
-void ui_event_ChillButtonDisabled(lv_event_t *e)
-{
-    logButtonState("Chill", false);
-    pasteurizerRelays.deactivateChillRelay();
-}
-
-// Pump Button Events
+/* ============================================================
+   Pump Button Events
+   ============================================================ */
 void ui_event_PumpButtonEnabled(lv_event_t *e)
 {
     logButtonState("Pump", true);
@@ -63,7 +87,9 @@ void ui_event_PumpButtonDisabled(lv_event_t *e)
     pasteurizerRelays.deactivatePumpRelay();
 }
 
-// Generic button handler to toggle state and call appropriate event
+/* ============================================================
+   Generic button handler
+   ============================================================ */
 void handleManualControlButton(
     lv_event_t *e,
     lv_obj_t *button, bool &state,
@@ -75,47 +101,17 @@ void handleManualControlButton(
         state = !state;
 
         // Update button color
-        lv_color_t color = state ? lv_color_hex(0x28A745) : lv_color_hex(0xDC3545);
+        lv_color_t color = state
+                               ? lv_color_hex(0x28A745)  // green
+                               : lv_color_hex(0xDC3545); // red
+
         lv_obj_set_style_bg_color(button, color, LV_PART_MAIN);
 
         // Call appropriate event
         if (state && onEnabled)
             onEnabled(e);
+
         if (!state && onDisabled)
             onDisabled(e);
     }
 }
-
-// Connect the generic handler to each button
-// void ui_event_OperationButton(lv_event_t *e)
-// {
-//     handleManualControlButton(
-//         e, ui_OperationButton,
-//         stateOperation,
-//         ui_event_OperationButtonEnabled,
-//         ui_event_OperationButtonDisabled);
-// }
-
-// void ui_event_HeatButton(lv_event_t *e)
-// {
-//     handleManualControlButton(
-//         e, ui_HeatButton, stateHeat,
-//         ui_event_HeatButtonEnabled,
-//         ui_event_HeatButtonDisabled);
-// }
-
-// void ui_event_ChillButton(lv_event_t *e)
-// {
-//     handleManualControlButton(
-//         e, ui_ChillButton, stateChill,
-//         ui_event_ChillButtonEnabled,
-//         ui_event_ChillButtonDisabled);
-// }
-
-// void ui_event_PumpButton(lv_event_t *e)
-// {
-//     handleManualControlButton(
-//         e, ui_PumpButton, statePump,
-//         ui_event_PumpButtonEnabled,
-//         ui_event_PumpButtonDisabled);
-// }
